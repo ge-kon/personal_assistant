@@ -17,7 +17,7 @@ def greetings():
     print('Добро пожаловать в Персональный помощник!')
 
 def interaction(sections):
-    print('Выберите действие:')
+    print('\nВыберите действие:')
     for i in sections:
         print(i)
 
@@ -52,6 +52,8 @@ def dict_to_note(data):
 
 #Получаем заметки из хранилища
 def get_notes():
+    if not os.path.exists(NOTES_FILE):
+        return []
     with open(NOTES_FILE, 'r') as file:
         return [dict_to_note(note) for note in json.load(file)]
 
@@ -77,8 +79,8 @@ def view_note():
         print('Заметки отсутствуют')
     else:
         try:
-            id = int(input('Введите id заметки >> '))
-            if str(id) not in [note.id for note in notes]:
+            id = str(int(input('Введите id заметки >> ')))
+            if id not in [note.id for note in notes]:
                 print('Заметка не найдена')
             else:
                 for note in notes:
@@ -95,14 +97,14 @@ def update_note():
         print('Заметки отсутствуют')
     else:
         try:
-            id = int(input('Введите id заметки >> '))
-            if str(id) not in [note.id for note in notes]:
+            id = str(int(input('Введите id заметки >> ')))
+            if id not in [note.id for note in notes]:
                 print('Заметка не найдена')
             else:
                 tmp_title = input('Введи новый заголовок >> ')
                 tmp_content = input('Введи новое содержание >> ')
-                notes = [note for note in notes if note.id != str(id)]
-                notes.append(Note(id = str(id), title=tmp_title, content=tmp_content, timestamp=dt.now().strftime('%d-%m-%Y %H:%M:%S')))
+                notes = [note for note in notes if note.id != id]
+                notes.append(Note(id = id, title=tmp_title, content=tmp_content, timestamp=dt.now().strftime('%d-%m-%Y %H:%M:%S')))
         except:
             print('Некорректный id.')
 
@@ -110,7 +112,7 @@ def update_note():
 def get_free_id():
     notes = get_notes()
     ids = [int(note.id) for note in notes]
-    return str(max(ids) + 1)
+    return str(max(ids) + 1) if len(notes) > 0 else '1'
 
 #Добавляем новую заметку
 def add_note():
@@ -120,15 +122,15 @@ def add_note():
     content = input('Введи содержание: ')
     new_note = Note(id = id, title=title, content=content)
     notes.append(new_note)
-    save_notes()
+    save_notes(notes)
     print(f'Заметка "{title}" добавлена.')
 
 #Удаляем заметку
 def delete_note():
     notes = get_notes()
     try:
-        id = int(input('Введите id заметки >> '))
-        notes = [note for note in notes if note.id != str(id)]
+        id = str(int(input('Введите id заметки >> ')))
+        notes = [note for note in notes if note.id != id]
         save_notes()
         print('Заметка удалена')
     except:
