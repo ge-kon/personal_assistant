@@ -4,19 +4,19 @@ import os
 from datetime import datetime as dt
 
 #Все файлы, чтобы не терять
-NOTES_FILE= 'notes.json'
+NOTES_FILE = 'notes.json'
+
+MENU = {
+    'main': ['1. Управление заметками', '2. Управление задачами', '3. Управление контактами', 
+             '4. Управление финансовыми записями', '5. Калькулятор', '6. Выход'],
+    'notes': ['1. Создание новой заметки', '2. Просмотр списка заметок', '3. Просмотр подробностей заметки', '4. Редактирование заметки', 
+              '5. Удаление заметки', '6. Импорт заметок в формате csv', '7. Экспорт заметок в формате csv', '8. Выход в главное меню']
+}
 
 def greetings():
     print('Добро пожаловать в Персональный помощник!')
 
-def show_main_menu():
-    sections = ['1. Управление заметками', 
-                '2. Управление задачами', 
-                '3. Управление контактами', 
-                '4. Управление финансовыми записями', 
-                '5. Калькулятор', 
-                '6. Выход']
-    
+def interaction(sections):
     print('Выберите действие:')
     for i in sections:
         print(i)
@@ -24,31 +24,7 @@ def show_main_menu():
     while True:
         try:
             c = int(input('>> '))
-            if 1 <= c <= 6:
-                return c
-            else:
-                raise ValueError    
-        except:
-            print('Неверный ввод. Повторите ввод.')
-
-def show_notes_menu():
-    sections = ['1. Создание новой заметки', 
-                '2. Просмотр списка заметок', 
-                '3. Просмотр подробностей заметки', 
-                '4. Редактирование заметки', 
-                '5. Удаление заметки', 
-                '6. Импорт заметок в формате csv',
-                '7. Экспорт заметок в формате csv',
-                '8. Выход в главное меню']
-    
-    print('Выберите действие:')
-    for i in sections:
-        print(i)
-
-    while True:
-        try:
-            c = int(input('>> '))
-            if 1 <= c <= 7:
+            if 1 <= c <= len(sections):
                 return c
             else:
                 raise ValueError    
@@ -161,7 +137,7 @@ def delete_note():
 if __name__ == '__main__':
     greetings()
     while True:
-        com = show_main_menu()
+        com = interaction(MENU['main'])
         
         if com == 6:
             print('Завершение программы.')
@@ -170,7 +146,7 @@ if __name__ == '__main__':
         elif com == 1:
             print('Раздел: Управление заметками')
             while True:
-                com = show_notes_menu()
+                com = interaction(MENU['notes'])
                 if com == 1:
                     add_note()
                 elif com == 2:
