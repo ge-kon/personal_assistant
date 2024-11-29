@@ -2,10 +2,11 @@ import pandas as pd
 import json
 import os
 from datetime import datetime as dt
+import csv
 
 #Все файлы, чтобы не терять
 NOTES_FILE = 'notes.json'
-
+NOTES_EXPORT_FILE = 'notes_export.csv'
 MENU = {
     'main': ['1. Управление заметками', '2. Управление задачами', '3. Управление контактами', 
              '4. Управление финансовыми записями', '5. Калькулятор', '6. Выход'],
@@ -134,10 +135,34 @@ def delete_note():
     try:
         id = str(int(input('Введите id заметки >> ')))
         notes = [note for note in notes if note.id != id]
-        save_notes()
+        save_notes(notes)
         print('Заметка удалена')
-    except:
-        print('Некорректный id.')
+    except Exception as e:
+        print(f'Ошибка: {e}')
+
+#Экспорт заметок в csv
+def export_notes_to_csv():
+    try:
+        pd.DataFrame([note.to_dict() for note in get_notes()]).to_csv(NOTES_EXPORT_FILE, index=False)
+        print(f'Заметки экспортированы в {NOTES_EXPORT_FILE}')
+    except Exception as e:
+        print(f'Ошибка: {e}')
+
+#Импорт заметок из csv
+def import_notes_from_csv():
+    filename = input('Введите название файла (с расширением) для импорта заметок >> ')
+    try:
+        df = pd.read_csv(filename)
+        notes = get_notes()
+        for index, row in df.iterrows():
+            note = Note(id=str(row['id']), title=row['title'], content=row['content'], timestamp=row['timestamp'])
+            if note.id in [n.id for n in notes]:
+                note.id = get_free_id()
+            notes.append(note)
+        save_notes(notes)
+        print(f'Заметки импортированы из {filename}')
+    except Exception as e:
+        print(f'Ошибка: {e}')
 
 if __name__ == '__main__':
     greetings()
@@ -165,9 +190,9 @@ if __name__ == '__main__':
                 elif com == 5:
                     delete_note()
                 elif com == 6:
-                    print('Команда в разработке')
+                    import_notes_from_csv()
                 elif com == 7:
-                    print('Команда в разработке')
+                    export_notes_to_csv()
                 elif com == 8:
                     break
 
