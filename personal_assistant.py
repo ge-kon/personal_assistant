@@ -98,13 +98,16 @@ def update_note():
     else:
         try:
             id = str(int(input('Введите id заметки >> ')))
-            if id not in [note.id for note in notes]:
+            note = next(filter(lambda x: x.id == id, notes), None)
+            if note == None:
                 print('Заметка не найдена')
             else:
                 tmp_title = input('Введи новый заголовок >> ')
                 tmp_content = input('Введи новое содержание >> ')
-                notes = [note for note in notes if note.id != id]
-                notes.append(Note(id = id, title=tmp_title, content=tmp_content, timestamp=dt.now().strftime('%d-%m-%Y %H:%M:%S')))
+                note.title = tmp_title
+                note.content = tmp_content
+                note.timestamp = dt.now().strftime('%d-%m-%Y %H:%M:%S')
+                save_notes(notes)
         except:
             print('Некорректный id.')
 
@@ -141,12 +144,14 @@ if __name__ == '__main__':
     while True:
         com = interaction(MENU['main'])
         
+        #Выход
         if com == 6:
-            print('Завершение программы.')
+            print('\nЗавершение программы.')
             break
         
+        #Заметки
         elif com == 1:
-            print('Раздел: Управление заметками')
+            print('\nРаздел: Управление заметками')
             while True:
                 com = interaction(MENU['notes'])
                 if com == 1:
@@ -165,8 +170,20 @@ if __name__ == '__main__':
                     print('Команда в разработке')
                 elif com == 8:
                     break
-                else:
-                    print('Выбрана неверная команда')
 
-        else:
-            print('Раздел в разработке. Выбери другой раздел.')
+        #Задачи
+        elif com == 2:
+            print('\nРаздел: Управление задачами')
+
+        #Контакты
+        elif com == 3:
+            print('\nРаздел: Управление контактами')
+
+        #Фин. записи
+        elif com == 4:
+            print('\nРаздел: Управление финансовыми записями')
+
+        #Калькулятор
+        elif com == 5:
+            print('\nРаздел: Калькулятор')
+
