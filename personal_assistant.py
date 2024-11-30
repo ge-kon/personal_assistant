@@ -20,7 +20,7 @@ MENU = {
               '5. Удаление заметки', '6. Импорт заметок в формате csv', '7. Экспорт заметок в формате csv', '8. Выход в главное меню'],
     'tasks': ['1. Добавление новой задачи', '2. Просмотр списка задач', '3. Отметка задачи как выполненной', '4. Редактирование задачи', 
               '5. Удаление задачи', '6. Импорт заметок в формате csv', '7. Экспорт заметок в формате csv', '8. Выход в главное меню'],
-    'contacts': ['1. Добавление нового контакта', '2. Поиск контакта по имени', '3. Поиск контакта по телефону', '4. Редактирование контакта', 
+    'contacts': ['1. Добавление нового контакта', '2. Просмотр списка контактов', '3. Поиск контакта (по имени или телефону)', '4. Редактирование контакта', 
                  '5. Удаление контакта', '6. Импорт заметок в формате csv', '7. Экспорт заметок в формате csv', '8. Выход в главное меню'],
     'finance': []
 }
@@ -328,6 +328,8 @@ def import_tasks_from_csv():
 
 #############################
 #Управление контантами
+
+#Класс контакт
 class Contact:
     def __init__(self, id, name, phone, email):
         self.id = id
@@ -335,6 +337,139 @@ class Contact:
         self.phone = phone
         self.email = email
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'phone': self.phone,
+            'email': self.email
+        }
+
+#Конвертируем dict в контакт
+def dict_to_contact(data):
+    return Contact(id=data['id'], name=data['name'], phone=data['phone'], email=data['email'])
+
+#Получаем контакты из хранилища
+def get_contacts():
+    if not os.path.exists(CONTACTS_FILE):
+        return []
+    with open(CONTACTS_FILE, 'r') as file:
+        return [dict_to_contact(contact) for contact in json.load(file)]
+
+#Сохраняем контакты
+def save_contacts(contacts):
+    with open(CONTACTS_FILE, 'w') as file:
+        json.dump([contact.to_dict() for contact in contacts], file)
+
+#Добавляем новый контакт
+def add_contact():
+    contacts = get_contacts()
+    id = get_free_id('contacts')
+    name = input('Введите имя контакта >> ')
+    phone = input('Введите номер телефона контакта >> ')
+    email = input('Введите email контакта >> ')
+    new_contact = Contact(id = id, name = name, phone = phone, email = email)
+    contacts.append(new_contact)
+    save_contacts(contacts)
+    print(f'Контакт "{name}" добавлен.')
+
+#Смотрим все задачи
+def view_contacts():
+    contacts = get_contacts()
+    if len(contacts) == 0:
+        print('Контакты отсутствуют')
+    else:
+        print('Список всех контактов:')
+        for contact in contacts:
+            print(f'id: {contact.id}, имя: {contact.name}, номер: {contact.phone}, email: {contact.email}')
+
+
+#Просмотр определенного контакта
+def view_contact():
+    contacts = get_contacts()
+    if len(contacts) == 0:
+        print('Контакты отсутствуют')
+    else:
+        com = input('Искать контакт по имени или по номеру (имя/номер) >> ')
+        while True:
+            try:
+                if com == 'имя':
+                    name = input('Введите имя контакта >> ')
+                    contacts = [contact for contact in contacts if contact.name == name]
+                elif com == 'номер':
+                    phone = input('Введите номер контакта >> ')
+                    contacts = [contact for contact in contacts if contact.phone == phone]          
+                else:
+                    raise ValueError  
+                
+                if len(contacts) == 0:
+                        print('Контакты не найдены')
+                        return
+                else:
+                    for contact in contacts:
+                        print(f'id: {contact.id}, имя: {contact.name}, номер: {contact.phone}, email: {contact.email}')
+                    return  
+                
+            except Exception as e:
+                print(f'Ошибка: {e}')
+                return
+
+#Обновляем контакт
+def update_contact():
+    contacts = get_contacts()
+    if len(contacts) == 0:
+        print('Контакты отсутствуют')
+    else:
+        try:
+            id = int(input('Введите id контакта >> '))
+            contact = next(filter(lambda x: x.id == id, contacts), None)
+            if contact == None:
+                print('Контакт не найден')
+            else:
+                tmp_name = input('Введи новое имя >> ')
+                tmp_phone = input('Введи новый номер >> ')
+                tmp_email = input('Введи новый email >> ')
+                contact.name = tmp_name
+                contact.phone = tmp_phone
+                contact.email = tmp_email
+                save_contacts(contacts)
+        except Exception as e:
+            print(f'Ошибка: {e}')
+
+#Удаляем контакт
+def delete_contact():
+    contacts = get_contacts()
+    try:
+        id = int(input('Введите id контакта >> '))
+        contacts = [contact for contact in contacts if contact.id != id]
+        save_tasks(contacts)
+        print('Контакт удален')
+    except Exception as e:
+        print(f'Ошибка: {e}')
+
+#Экспорт контактов в csv
+def export_contacts_to_csv():
+    try:
+        pd.DataFrame([contact.to_dict() for contact in get_contacts()]).to_csv(CONTACTS_EXPORT_FILE, index=False)
+        print(f'Контакты экспортированы в {CONTACTS_EXPORT_FILE}')
+    except Exception as e:
+        print(f'Ошибка: {e}')
+
+#Импорт контактов из csv
+def import_contacts_from_csv():
+    filename = input('Введите название файла (с расширением) для импорта контактов >> ')
+    try:
+        df = pd.read_csv(filename)
+        contacts = get_contacts()
+        for index, row in df.iterrows():
+            contact = Contact(id=int(row['id']), name=row['name'], phone=row['phone'], email=row['email'])
+            if contact.id in [t.id for t in contact]:
+                contact.id = get_free_id('contacts')
+            contacts.append(contact)
+            save_contacts(contacts)
+        print(f'Контакты импортированы из {filename}')
+    except Exception as e:
+        print(f'Ошибка: {e}')
 
 
 #############################
@@ -399,11 +534,30 @@ if __name__ == '__main__':
                     export_tasks_to_csv()
                 elif com == 8:
                     break
-                else:
-                    print('В разработке')
+
         #Контакты
         elif com == 3:
             print('\nРаздел: Управление контактами')
+            while True:
+                com = interaction(MENU['contacts'])
+                if com == 1:
+                    add_contact()
+                elif com == 2:
+                    view_contacts()
+                elif com == 3:
+                    view_contact()
+                elif com == 4:
+                    update_contact()
+                elif com == 5:
+                    delete_contact()
+                elif com == 6:
+                    import_contacts_from_csv()
+                elif com == 7:
+                    export_contacts_to_csv()
+                elif com == 8:
+                    break
+                else:
+                    print('В разработке')
 
         #Фин. записи
         elif com == 4:
