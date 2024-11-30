@@ -8,14 +8,24 @@ NOTES_FILE = 'notes.json'
 NOTES_EXPORT_FILE = 'notes_export.csv'
 TASKS_FILE = 'tasks.json'
 TASKS_EXPORT_FILE = 'tasks_export.csv'
+CONTACTS_FILE = 'contacts.json'
+CONTACTS_EXPORT_FILE = 'contacts_export.csv'
+FINANCE_FILE = 'finance.json'
+FINANCE_EXPORT_FILE = 'finance_export.csv'
+
 MENU = {
     'main': ['1. Управление заметками', '2. Управление задачами', '3. Управление контактами', 
              '4. Управление финансовыми записями', '5. Калькулятор', '6. Выход'],
     'notes': ['1. Создание новой заметки', '2. Просмотр списка заметок', '3. Просмотр подробностей заметки', '4. Редактирование заметки', 
               '5. Удаление заметки', '6. Импорт заметок в формате csv', '7. Экспорт заметок в формате csv', '8. Выход в главное меню'],
     'tasks': ['1. Добавление новой задачи', '2. Просмотр списка задач', '3. Отметка задачи как выполненной', '4. Редактирование задачи', 
-              '5. Удаление задачи', '6. Импорт заметок в формате csv', '7. Экспорт заметок в формате csv', '8. Выход в главное меню']
+              '5. Удаление задачи', '6. Импорт заметок в формате csv', '7. Экспорт заметок в формате csv', '8. Выход в главное меню'],
+    'contacts': ['1. Добавление нового контакта', '2. Поиск контакта по имени', '3. Поиск контакта по телефону', '4. Редактирование контакта', 
+                 '5. Удаление контакта', '6. Импорт заметок в формате csv', '7. Экспорт заметок в формате csv', '8. Выход в главное меню'],
+    'finance': []
 }
+
+
 
 #Анализ ввода пользователя
 def interaction(sections):
@@ -32,6 +42,26 @@ def interaction(sections):
                 raise ValueError    
         except Exception as e:
             print(f'Ошибка: {e}')
+
+def get_free_id(section):
+    ids = []
+    filename = ''
+    if section == 'notes':
+        filename = NOTES_FILE
+    elif section == 'tasks':
+         filename = TASKS_FILE
+    elif section == 'contacts':
+        filename = CONTACTS_FILE
+    elif section == 'finance':
+        filename = FINANCE_FILE
+
+    if os.path.exists(filename):
+        with open(filename, 'r') as file:
+            ids = [unit['id'] for unit in json.load(file)]
+    return max(ids) + 1 if len(ids) > 0 else 1
+
+#############################
+#Управление заметками
 
 #Класс заметки
 class Note:
@@ -114,16 +144,10 @@ def update_note():
         except Exception as e:
             print(f'Ошибка: {e}')
 
-#Выбираем свободный id
-def get_free_note_id():
-    notes = get_notes()
-    ids = [note.id for note in notes]
-    return max(ids) + 1 if len(notes) > 0 else 1
-
 #Добавляем новую заметку
 def add_note():
     notes = get_notes()
-    id = get_free_note_id()
+    id = get_free_id('notes')
     title = input('Введи заголовок: ')
     content = input('Введи содержание: ')
     new_note = Note(id = id, title=title, content=content)
@@ -159,13 +183,15 @@ def import_notes_from_csv():
         for index, row in df.iterrows():
             note = Note(id=int(row['id']), title=row['title'], content=row['content'], timestamp=row['timestamp'])
             if note.id in [n.id for n in notes]:
-                note.id = get_free_note_id()
+                note.id = get_free_id('notes')
             notes.append(note)
-        save_notes(notes)
+            save_notes(notes)
         print(f'Заметки импортированы из {filename}')
     except Exception as e:
         print(f'Ошибка: {e}')
 
+#############################
+#Управление задачами
 
 #Класс задачи
 class Task:
@@ -213,16 +239,10 @@ def view_tasks():
         for task in tasks:
             print(f'Краткое описание: {task.title}; приоритет: {task.priority}; дедлайн: {task.due_date}; подробное описание: {task.description}; выполнено: {task.done}; id: {task.id}')
 
-#Выбираем свободный id
-def get_free_task_id():
-    tasks = get_tasks()
-    ids = [task.id for task in tasks]
-    return max(ids) + 1 if len(tasks) > 0 else 1
-
 #Добавляем новую задачу
 def add_task():
     tasks = get_tasks()
-    id = get_free_task_id()
+    id = get_free_id('tasks')
     title = input('Введите название задачи >> ')
     description = input('Введите описание задачи >> ')
     priority = input('Введите приоритет задачи («Высокий», «Средний», «Низкий») >> ')
@@ -299,15 +319,36 @@ def import_tasks_from_csv():
         for index, row in df.iterrows():
             task = Task(id=int(row['id']), title=row['title'], description=row['description'], done=row['done'], priority=row['priority'], due_date=row['due_date'])
             if task.id in [t.id for t in tasks]:
-                task.id = get_free_task_id()
+                task.id = get_free_id('tasks')
             tasks.append(task)
-        save_tasks(tasks)
+            save_tasks(tasks)
         print(f'Задачи импортированы из {filename}')
     except Exception as e:
         print(f'Ошибка: {e}')
 
+#############################
+#Управление контантами
+class Contact:
+    def __init__(self, id, name, phone, email):
+        self.id = id
+        self.name = name
+        self.phone = phone
+        self.email = email
 
-            
+
+
+#############################
+#Управление фин. записями
+
+
+
+#############################
+#Калькулятор
+
+
+
+#############################
+#Main
 
 if __name__ == '__main__':
     print('Добро пожаловать в Персональный помощник!')
@@ -315,13 +356,8 @@ if __name__ == '__main__':
     while True:
         com = interaction(MENU['main'])
         
-        #Выход
-        if com == 6:
-            print('\nЗавершение программы.')
-            break
-        
         #Заметки
-        elif com == 1:
+        if com == 1:
             print('\nРаздел: Управление заметками')
             while True:
                 com = interaction(MENU['notes'])
@@ -376,4 +412,9 @@ if __name__ == '__main__':
         #Калькулятор
         elif com == 5:
             print('\nРаздел: Калькулятор')
+        
+        #Выход
+        elif com == 6:
+            print('\nЗавершение программы.')
+            break
 
