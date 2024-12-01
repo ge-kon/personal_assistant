@@ -22,12 +22,10 @@ MENU = {
               '5. Удаление задачи', '6. Импорт заметок в формате csv', '7. Экспорт заметок в формате csv', '8. Выход в главное меню'],
     'contacts': ['1. Добавление нового контакта', '2. Просмотр списка контактов', '3. Поиск контакта (по имени или телефону)', '4. Редактирование контакта', 
                  '5. Удаление контакта', '6. Импорт заметок в формате csv', '7. Экспорт заметок в формате csv', '8. Выход в главное меню'],
-    'finance': []
+    'finance': ['1. Добавление новой финансовой записи (доход или расход)', '2. Просмотр всех записей с возможностью фильтрации по дате или категории', 
+                '3. Генерация отчёта о финансовой активности за определённый период', '4. Удалить запись', '5. Импорт записей в формате csv', '6. Экспорт записей в формате csv', '7. Выход в главное меню']
 }
 
-
-
-#Анализ ввода пользователя
 def interaction(sections):
     print('\nВыберите действие:')
     for i in sections:
@@ -60,12 +58,18 @@ def get_free_id(section):
             ids = [unit['id'] for unit in json.load(file)]
     return max(ids) + 1 if len(ids) > 0 else 1
 
-#############################
-#Управление заметками
+def validate_date(date):
+    try:
+        dt.strptime(date, '%d-%m-%Y')
+        return True 
+    except:
+        return False  
 
-#Класс заметки
+#############################
+#Заметки
+
 class Note:
-    def __init__(self, id, title, content, timestamp=None):
+    def __init__(self, id: int, title: str, content: str, timestamp: str = None):
         self.id = id
         self.title = title
         self.content = content
@@ -78,24 +82,20 @@ class Note:
             'content': self.content,
             'timestamp': self.timestamp
         }
-    
-#Конвертируем dict в заметку
+
 def dict_to_note(data):
     return Note(id=data['id'], title=data['title'], content=data['content'], timestamp=data['timestamp'])
 
-#Получаем заметки из хранилища
 def get_notes():
     if not os.path.exists(NOTES_FILE):
         return []
     with open(NOTES_FILE, 'r') as file:
         return [dict_to_note(note) for note in json.load(file)]
 
-#Сохраняем заметки в хранилище
 def save_notes(notes):
     with open(NOTES_FILE, 'w') as file:
         json.dump([note.to_dict() for note in notes], file)
 
-#Смотрим все заметки
 def view_notes():
     notes = get_notes()
     if len(notes) == 0:
@@ -105,7 +105,6 @@ def view_notes():
         for note in notes:
             print(f'Заголовок: {note.title} (id: {note.id}, дата: {note.timestamp})')
 
-#Просмотр определенной заметки
 def view_note():
     notes = get_notes()
     if len(notes) == 0:
@@ -123,7 +122,6 @@ def view_note():
         except Exception as e:
             print(f'Ошибка: {e}')
 
-#Обновляем заметку
 def update_note():
     notes = get_notes()
     if len(notes) == 0:
@@ -144,7 +142,6 @@ def update_note():
         except Exception as e:
             print(f'Ошибка: {e}')
 
-#Добавляем новую заметку
 def add_note():
     notes = get_notes()
     id = get_free_id('notes')
@@ -155,7 +152,6 @@ def add_note():
     save_notes(notes)
     print(f'Заметка "{title}" добавлена.')
 
-#Удаляем заметку
 def delete_note():
     notes = get_notes()
     try:
@@ -166,7 +162,6 @@ def delete_note():
     except Exception as e:
         print(f'Ошибка: {e}')
 
-#Экспорт заметок в csv
 def export_notes_to_csv():
     try:
         pd.DataFrame([note.to_dict() for note in get_notes()]).to_csv(NOTES_EXPORT_FILE, index=False)
@@ -174,7 +169,6 @@ def export_notes_to_csv():
     except Exception as e:
         print(f'Ошибка: {e}')
 
-#Импорт заметок из csv
 def import_notes_from_csv():
     filename = input('Введите название файла (с расширением) для импорта заметок >> ')
     try:
@@ -191,11 +185,10 @@ def import_notes_from_csv():
         print(f'Ошибка: {e}')
 
 #############################
-#Управление задачами
+#Задачи
 
-#Класс задачи
 class Task:
-    def __init__(self, id, title, priority = 'Средний', due_date = None, description = '', done = False):
+    def __init__(self, id: int, title: str, priority: str = 'Средний', due_date: str = None, description: str = '', done: bool = False):
         self.id = id
         self.title = title
         self.description = description
@@ -213,23 +206,19 @@ class Task:
             'due_date': self.due_date
         }
 
-#Конвертируем dict в задачу
 def dict_to_task(data):
     return Task(id=data['id'], title=data['title'], description=data['description'], done=data['done'], priority=data['priority'], due_date=data['due_date'])
 
-#Получаем задачи из хранилища
 def get_tasks():
     if not os.path.exists(TASKS_FILE):
         return []
     with open(TASKS_FILE, 'r') as file:
         return [dict_to_task(task) for task in json.load(file)]
 
-#Сохраняем задачи
 def save_tasks(tasks):
     with open(TASKS_FILE, 'w') as file:
         json.dump([task.to_dict() for task in tasks], file)
 
-#Смотрим все задачи
 def view_tasks():
     tasks = get_tasks()
     if len(tasks) == 0:
@@ -239,20 +228,30 @@ def view_tasks():
         for task in tasks:
             print(f'Краткое описание: {task.title}; приоритет: {task.priority}; дедлайн: {task.due_date}; подробное описание: {task.description}; выполнено: {task.done}; id: {task.id}')
 
-#Добавляем новую задачу
 def add_task():
     tasks = get_tasks()
     id = get_free_id('tasks')
     title = input('Введите название задачи >> ')
     description = input('Введите описание задачи >> ')
-    priority = input('Введите приоритет задачи («Высокий», «Средний», «Низкий») >> ')
-    due_date = input('Введите срок выполнения задачи (ДД-ММ-ГГГГ) >> ')
+    priority = ''
+    while True:
+        priority = input('Введите новый приоритет задачи (Высокий/Средний/Низкий) >> ')
+        if priority in ['Высокий', 'Средний', 'Низкий']:
+            break
+        else:
+             print('Приоритет некорректен. Выберите из набора (Высокий/Средний/Низкий)')
+    due_date = ''
+    while True:
+        due_date = input('Введите новый срок выполнения задачи (ДД-ММ-ГГГГ) >> ')
+        if validate_date(due_date):
+            break
+        else:
+            print('Дата некорректна. Введите в формате ДД-ММ-ГГГГ')
     new_task = Task(id = id, title = title, description = description, priority = priority, due_date = due_date)
     tasks.append(new_task)
     save_tasks(tasks)
     print(f'Задача "{title}" добавлена.')
 
-#Отмечаем задачу
 def do_task():
     tasks = get_tasks()
     if len(tasks) == 0:
@@ -270,7 +269,6 @@ def do_task():
         except Exception as e:
             print(f'Ошибка: {e}')
 
-#Обновляем задачу
 def update_task():
     tasks = get_tasks()
     if len(tasks) == 0:
@@ -284,14 +282,27 @@ def update_task():
             else:
                 task.title = input('Введите новое название задачи >> ')
                 task.description = input('Введите новое описание задачи >> ')
-                task.priority = input('Введите новый приоритет задачи («Высокий», «Средний», «Низкий») >> ')
-                task.due_date = input('Введите новый срок выполнения задачи (ДД-ММ-ГГГГ) >> ')
+                priority = ''
+                while True:
+                    priority = input('Введите новый приоритет задачи (Высокий/Средний/Низкий) >> ')
+                    if priority in ['Высокий', 'Средний', 'Низкий']:
+                        break
+                    else:
+                        print('Приоритет некорректен. Выберите из набора (Высокий/Средний/Низкий)')
+                task.priority = priority
+                due_date = ''
+                while True:
+                    due_date = input('Введите новый срок выполнения задачи (ДД-ММ-ГГГГ) >> ')
+                    if validate_date(due_date):
+                        break
+                    else:
+                        print('Дата некорректна. Введите в формате ДД-ММ-ГГГГ')
+                task.due_date = due_date
                 print(f'Задача "{task.title}" изменена')
                 save_tasks(tasks)
         except Exception as e:
             print(f'Ошибка: {e}')
 
-#Удаляем задачу
 def delete_task():
     tasks = get_tasks()
     try:
@@ -302,7 +313,6 @@ def delete_task():
     except Exception as e:
         print(f'Ошибка: {e}')
 
-#Экспорт задач в csv
 def export_tasks_to_csv():
     try:
         pd.DataFrame([task.to_dict() for task in get_tasks()]).to_csv(TASKS_EXPORT_FILE, index=False)
@@ -310,7 +320,6 @@ def export_tasks_to_csv():
     except Exception as e:
         print(f'Ошибка: {e}')
 
-#Импорт задач из csv
 def import_tasks_from_csv():
     filename = input('Введите название файла (с расширением) для импорта задач >> ')
     try:
@@ -327,11 +336,10 @@ def import_tasks_from_csv():
         print(f'Ошибка: {e}')
 
 #############################
-#Управление контантами
+#Контакты
 
-#Класс контакт
 class Contact:
-    def __init__(self, id, name, phone, email):
+    def __init__(self, id: int, name: str, phone: str, email: str):
         self.id = id
         self.name = name
         self.phone = phone
@@ -345,23 +353,19 @@ class Contact:
             'email': self.email
         }
 
-#Конвертируем dict в контакт
 def dict_to_contact(data):
     return Contact(id=data['id'], name=data['name'], phone=data['phone'], email=data['email'])
 
-#Получаем контакты из хранилища
 def get_contacts():
     if not os.path.exists(CONTACTS_FILE):
         return []
     with open(CONTACTS_FILE, 'r') as file:
         return [dict_to_contact(contact) for contact in json.load(file)]
 
-#Сохраняем контакты
 def save_contacts(contacts):
     with open(CONTACTS_FILE, 'w') as file:
         json.dump([contact.to_dict() for contact in contacts], file)
 
-#Добавляем новый контакт
 def add_contact():
     contacts = get_contacts()
     id = get_free_id('contacts')
@@ -373,7 +377,6 @@ def add_contact():
     save_contacts(contacts)
     print(f'Контакт "{name}" добавлен.')
 
-#Смотрим все задачи
 def view_contacts():
     contacts = get_contacts()
     if len(contacts) == 0:
@@ -383,8 +386,6 @@ def view_contacts():
         for contact in contacts:
             print(f'id: {contact.id}, имя: {contact.name}, номер: {contact.phone}, email: {contact.email}')
 
-
-#Просмотр определенного контакта
 def view_contact():
     contacts = get_contacts()
     if len(contacts) == 0:
@@ -414,7 +415,6 @@ def view_contact():
                 print(f'Ошибка: {e}')
                 return
 
-#Обновляем контакт
 def update_contact():
     contacts = get_contacts()
     if len(contacts) == 0:
@@ -436,7 +436,6 @@ def update_contact():
         except Exception as e:
             print(f'Ошибка: {e}')
 
-#Удаляем контакт
 def delete_contact():
     contacts = get_contacts()
     try:
@@ -447,7 +446,6 @@ def delete_contact():
     except Exception as e:
         print(f'Ошибка: {e}')
 
-#Экспорт контактов в csv
 def export_contacts_to_csv():
     try:
         pd.DataFrame([contact.to_dict() for contact in get_contacts()]).to_csv(CONTACTS_EXPORT_FILE, index=False)
@@ -455,7 +453,6 @@ def export_contacts_to_csv():
     except Exception as e:
         print(f'Ошибка: {e}')
 
-#Импорт контактов из csv
 def import_contacts_from_csv():
     filename = input('Введите название файла (с расширением) для импорта контактов >> ')
     try:
@@ -475,6 +472,178 @@ def import_contacts_from_csv():
 #############################
 #Управление фин. записями
 
+#Класс запись
+class FinanceRecord:
+    def __init__(self, id: int, amount: float, category: str, description: str, date: str = None):
+        self.id = id
+        self.amount = amount
+        self.description = description
+        self.category = category
+        self.date = date
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'amount': self.amount,
+            'category': self.category,
+            'description': self.description,
+            'date': self.date
+        }
+
+#Конвертируем dict в запись
+def dict_to_finance_record(data):
+    return FinanceRecord(id=data['id'], amount=data['amount'], description=data['description'], category=data['category'], date=data['date'])
+
+#Получаем записи из хранилища
+def get_finance_records():
+    if not os.path.exists(FINANCE_FILE):
+        return []
+    with open(FINANCE_FILE, 'r') as file:
+        return [dict_to_finance_record(finance_record) for finance_record in json.load(file)]
+
+#Сохраняем записи
+def save_finance_records(finance_records):
+    with open(FINANCE_FILE, 'w') as file:
+        json.dump([finance_record.to_dict() for finance_record in finance_records], file)
+
+#Добавляем новую запись
+def add_finance_record():
+    finance_records = get_finance_records()
+    id = get_free_id('finance')
+    neg = False
+
+    while True:
+            com = input('Введите тип операции (доход/расход) >> ')
+            try:
+                if com == 'доход':
+                    neg = True
+                    break
+                elif com == 'расход':
+                    neg = False  
+                    break      
+                else:
+                    raise ValueError                
+            except Exception as e:
+                print(f'Ошибка: {e}')
+    
+    amount = float(input('Введите размер операции >> '))
+    if neg:
+        amount *= -1
+    category = input('Введите тип категории >> ')
+    description = input('Введите описание операции >> ')
+    date = ''
+    while True:
+        date = input('Введите срок совершения операции (ДД-ММ-ГГГГ) >> ')
+        if validate_date(date):
+            break
+        else:
+            print('Дата некорректна. Введите в формате ДД-ММ-ГГГГ')
+    new_record = FinanceRecord(id = id, amount = amount, description = description, category = category, date = date)
+    finance_records.append(new_record)
+    save_finance_records(finance_records)
+    print(f'Операция добавлена.')
+
+#Смотрим все записи
+def view_finance_records():
+    finance_records = get_finance_records()
+    if len(finance_records) == 0:
+        print('Записи отсутствуют')
+    else:
+        while True:
+            com = input('Введите по чему фильтровать записи (дата/категория/ничего) >> ')
+            try:
+                if com == 'дата':
+                    inp = ''
+                    while True:
+                        inp = input('Введите дату (ДД-ММ-ГГГГ) >> ')
+                        if validate_date(inp):
+                            break
+                        else:
+                            print('Дата некорректна. Введите в формате ДД-ММ-ГГГГ')
+                    finance_records = [finance_record for finance_record in finance_records if finance_record.date == inp]
+                    break
+                elif com == 'категория':
+                    inp = input('Введите категорию >> ')
+                    finance_records = [finance_record for finance_record in finance_records if finance_record.category == inp]
+                    break  
+                elif com == 'ничего':
+                    break      
+                else:
+                    raise ValueError                
+            except Exception as e:
+                print(f'Ошибка: {e}')
+        print('Список записей:')
+        for finance_record in finance_records:
+            print(f'id: {finance_record.id}; размер: {finance_record.amount}; дата: {finance_record.date}; категория: {finance_record.category}; описание: {finance_record.description}')
+
+#получаем фин отчет
+def get_finance_analysis():
+    l, r = '', ''
+    while True:
+        l = input('Введите начальную дату (ДД-ММ-ГГГГ) >> ')
+        if validate_date(l):
+            break
+        else:
+            print('Дата некорректна. Введите в формате ДД-ММ-ГГГГ')
+    while True:
+        r = input('Введите конечную дату (ДД-ММ-ГГГГ) >> ')
+        if validate_date(r):
+            break
+        else:
+            print('Дата некорректна. Введите в формате ДД-ММ-ГГГГ')
+    finance_records = get_finance_records()
+    if len(finance_records) == 0:
+        print('Записи отсутствуют')
+    else:
+        print(f'Финансовый отчёт за период с {l} по {r}:')
+        date1 = dt.strptime(l, "%d-%m-%Y")
+        date2 = dt.strptime(r, "%d-%m-%Y")
+        finance_records = [finance_record for finance_record in finance_records if date1 <= dt.strptime(finance_record.date, "%d-%m-%Y") <= date2]
+        income = sum([finance_record.amount for finance_record in finance_records if finance_record.amount > 0])
+        outcome = sum([finance_record.amount for finance_record in finance_records if finance_record.amount < 0])
+        print(f"Доход: {income}")
+        print(f"Расход: {outcome}")
+        print(f"Остаток: {income-outcome}")
+        try:
+            pd.DataFrame([finance_record.to_dict() for finance_record in finance_records]).to_csv(f'finance_report_{l}_{r}.csv', index=False)
+            print(f'Подробная информация сохранена в файле finance_report_{l}_{r}.csv')
+        except Exception as e:
+            print(f'Ошибка при экспорте: {e}')    
+
+#Удаляем запись
+def delete_finance_record():
+    finance_records = get_finance_records()
+    try:
+        id = int(input('Введите id записи >> '))
+        finance_records = [finance_record for finance_record in finance_records if finance_record.id != id]
+        save_finance_records(finance_records)
+        print('Запись удалена')
+    except Exception as e:
+        print(f'Ошибка: {e}')
+
+#Экспорт записей в csv
+def export_finance_records_to_csv():
+    try:
+        pd.DataFrame([finance_record.to_dict() for finance_record in get_finance_records()]).to_csv(FINANCE_EXPORT_FILE, index=False)
+        print(f'Финансовые записи экспортированы в {FINANCE_EXPORT_FILE}')
+    except Exception as e:
+        print(f'Ошибка: {e}')
+
+#Импорт записей из csv
+def import_finance_records_from_csv():
+    filename = input('Введите название файла (с расширением) для импорта финансовых записей >> ')
+    try:
+        df = pd.read_csv(filename)
+        finance_records = get_finance_records()
+        for index, row in df.iterrows():
+            finance_record = FinanceRecord(id = int(row['id']), amount = row['amount'], description = row['description'], category = row['category'], date = row['date'])
+            if finance_record.id in [r.id for r in finance_records]:
+                finance_record.id = get_free_id('finance')
+            finance_records.append(finance_record)
+            save_finance_records(finance_records)
+        print(f'Финансовые записи импортированы из {filename}')
+    except Exception as e:
+        print(f'Ошибка: {e}')
 
 
 #############################
@@ -556,12 +725,26 @@ if __name__ == '__main__':
                     export_contacts_to_csv()
                 elif com == 8:
                     break
-                else:
-                    print('В разработке')
 
         #Фин. записи
         elif com == 4:
             print('\nРаздел: Управление финансовыми записями')
+            while True:
+                com = interaction(MENU['finance'])
+                if com == 1:
+                    add_finance_record()
+                elif com == 2:
+                    view_finance_records()
+                elif com == 3:
+                    get_finance_analysis()
+                elif com == 4:
+                    delete_finance_record()
+                elif com == 5:
+                    import_finance_records_from_csv()
+                elif com == 6:
+                    export_finance_records_to_csv()
+                elif com == 7:
+                    break
 
         #Калькулятор
         elif com == 5:
