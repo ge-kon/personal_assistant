@@ -3,7 +3,7 @@ import json
 import os
 from datetime import datetime as dt
 
-#Полезные константы
+
 NOTES_FILE = 'notes.json'
 NOTES_EXPORT_FILE = 'notes_export.csv'
 TASKS_FILE = 'tasks.json'
@@ -65,8 +65,6 @@ def validate_date(date):
     except:
         return False  
 
-#############################
-#Заметки
 
 class Note:
     def __init__(self, id: int, title: str, content: str, timestamp: str = None):
@@ -184,8 +182,6 @@ def import_notes_from_csv():
     except Exception as e:
         print(f'Ошибка: {e}')
 
-#############################
-#Задачи
 
 class Task:
     def __init__(self, id: int, title: str, priority: str = 'Средний', due_date: str = None, description: str = '', done: bool = False):
@@ -335,8 +331,6 @@ def import_tasks_from_csv():
     except Exception as e:
         print(f'Ошибка: {e}')
 
-#############################
-#Контакты
 
 class Contact:
     def __init__(self, id: int, name: str, phone: str, email: str):
@@ -469,10 +463,6 @@ def import_contacts_from_csv():
         print(f'Ошибка: {e}')
 
 
-#############################
-#Управление фин. записями
-
-#Класс запись
 class FinanceRecord:
     def __init__(self, id: int, amount: float, category: str, description: str, date: str = None):
         self.id = id
@@ -490,23 +480,19 @@ class FinanceRecord:
             'date': self.date
         }
 
-#Конвертируем dict в запись
 def dict_to_finance_record(data):
     return FinanceRecord(id=data['id'], amount=data['amount'], description=data['description'], category=data['category'], date=data['date'])
 
-#Получаем записи из хранилища
 def get_finance_records():
     if not os.path.exists(FINANCE_FILE):
         return []
     with open(FINANCE_FILE, 'r') as file:
         return [dict_to_finance_record(finance_record) for finance_record in json.load(file)]
 
-#Сохраняем записи
 def save_finance_records(finance_records):
     with open(FINANCE_FILE, 'w') as file:
         json.dump([finance_record.to_dict() for finance_record in finance_records], file)
 
-#Добавляем новую запись
 def add_finance_record():
     finance_records = get_finance_records()
     id = get_free_id('finance')
@@ -543,7 +529,6 @@ def add_finance_record():
     save_finance_records(finance_records)
     print(f'Операция добавлена.')
 
-#Смотрим все записи
 def view_finance_records():
     finance_records = get_finance_records()
     if len(finance_records) == 0:
@@ -576,7 +561,6 @@ def view_finance_records():
         for finance_record in finance_records:
             print(f'id: {finance_record.id}; размер: {finance_record.amount}; дата: {finance_record.date}; категория: {finance_record.category}; описание: {finance_record.description}')
 
-#получаем фин отчет
 def get_finance_analysis():
     l, r = '', ''
     while True:
@@ -610,7 +594,6 @@ def get_finance_analysis():
         except Exception as e:
             print(f'Ошибка при экспорте: {e}')    
 
-#Удаляем запись
 def delete_finance_record():
     finance_records = get_finance_records()
     try:
@@ -621,7 +604,6 @@ def delete_finance_record():
     except Exception as e:
         print(f'Ошибка: {e}')
 
-#Экспорт записей в csv
 def export_finance_records_to_csv():
     try:
         pd.DataFrame([finance_record.to_dict() for finance_record in get_finance_records()]).to_csv(FINANCE_EXPORT_FILE, index=False)
@@ -629,7 +611,6 @@ def export_finance_records_to_csv():
     except Exception as e:
         print(f'Ошибка: {e}')
 
-#Импорт записей из csv
 def import_finance_records_from_csv():
     filename = input('Введите название файла (с расширением) для импорта финансовых записей >> ')
     try:
@@ -646,9 +627,6 @@ def import_finance_records_from_csv():
         print(f'Ошибка: {e}')
 
 
-#############################
-#Калькулятор
-
 def calculate():
     while True:
         s = input('Введите выражение (дробные числа через вводите точку) >> ')
@@ -663,9 +641,6 @@ def calculate():
         except Exception as e:
             print(f'Ошибка: {e}. Пожалуйста, введите корректный пример')
     
-
-#############################
-#Main
 
 if __name__ == '__main__':
     print('Добро пожаловать в Персональный помощник!')
@@ -773,4 +748,3 @@ if __name__ == '__main__':
         elif com == 6:
             print('\nЗавершение программы.')
             break
-
