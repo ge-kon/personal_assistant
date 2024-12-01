@@ -3,6 +3,7 @@ import json
 import os
 from datetime import datetime as dt
 
+#Ссылка на GitHub >> https://github.com/ge-kon/personal_assistant
 
 NOTES_FILE = 'notes.json'
 NOTES_EXPORT_FILE = 'notes_export.csv'
